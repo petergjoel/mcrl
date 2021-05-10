@@ -118,22 +118,21 @@ extern "C" double uppaal_external_learner_predict(void* object, bool is_eval, si
     // a weighted choice will be done over all actions according to the weight
     auto q = (QLearner*) object;
     //std::ostream& out = std::cerr;
-    double d_value = 1.0;
     
     if(is_eval)
     {
         if(q->is_allowed(d_vars, c_vars, action))
         {
-            d_value = 1.0;
+            return 1.0;
         }
         else
         {
-            d_value = 0.0;
+            return 0.0;
         }
     }
     else
     {
-        auto [lower, upper, sum_count] = q->search_statistics(d_vars, c_vars);
+        auto [lower, upper, sum_count, nactions] = q->search_statistics(d_vars, c_vars);
         auto value = q->value(d_vars, c_vars, action);
         if(sum_count == 0)
         {
@@ -141,15 +140,32 @@ extern "C" double uppaal_external_learner_predict(void* object, bool is_eval, si
             return 0;
         }
         else
-        {
-            if(q->_is_minimization)
-                return upper - value._value;
+        {            
+            const double pr_action = ((double)sum_count / (double)nactions);
+            // the exploration-term is the amount of "randomness" in the search.
+            // we here adjust it to bias towards "less sampled".
+            const double exploration = 1.0 - ((double)value._count / pr_action); // discount closeness to mean samples
+            const double difference = upper - lower;
+            // Notice that we normalize the weights to a [0,1] interval here (with a special-case of
+            // upper == lower) and then add the exploration-term (which is proportional to the
+            // number of actions seen so far).
+            // The special case happens most often when only one action has been
+            // seen so far.
+            if(difference == 0)
+                return exploration;
+            if(value._count == 0)
+            {
+                return 1.0 + exploration; // as good a weight as the best!
+            }
             else
-                return value._value - lower;
+            {
+                if(q->_is_minimization)
+                    return exploration + ((upper - value._value) / difference);
+                else
+                    return exploration + ((value._value - lower) / difference);
+            }
         }
     }
-    
-    return d_value;
 }
 
 /**
