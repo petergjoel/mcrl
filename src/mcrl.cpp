@@ -140,30 +140,40 @@ extern "C" double uppaal_external_learner_predict(void* object, bool is_eval, si
             return 0;
         }
         else
-        {            
+        {
             const double pr_action = ((double)sum_count / (double)nactions);
-            // the exploration-term is the amount of "randomness" in the search.
-            // we here adjust it to bias towards "less sampled".
-            const double exploration = 1.0 - ((double)value._count / pr_action); // discount closeness to mean samples
             const double difference = upper - lower;
-            // Notice that we normalize the weights to a [0,1] interval here (with a special-case of
-            // upper == lower) and then add the exploration-term (which is proportional to the
-            // number of actions seen so far).
-            // The special case happens most often when only one action has been
-            // seen so far.
+
             if(difference == 0)
-                return exploration;
-            if(value._count == 0)
-            {
-                return 1.0 + exploration; // as good a weight as the best!
-            }
+                return 1.0;
+
+            // handle special-case where we want "best"-value when no samples are seen.
+            double relative = value._count != 0 ? value._value :
+                (q->_is_minimization ? lower : upper); // if no samples, pick best value
+
+            // compute normalization (between [0,1])
+            if(q->_is_minimization)
+                relative = (upper - relative) / difference;
             else
-            {
-                if(q->_is_minimization)
-                    return exploration + ((upper - value._value) / difference);
-                else
-                    return exploration + ((value._value - lower) / difference);
-            }
+                relative = (relative - lower) / difference;
+
+            // punish "more sampled" more; i.e. they will be even further from weight 1
+            // the more samples they have seen
+            const double lifted = std::pow(
+                                relative, std::min(1000.0,
+                                std::sqrt(std::max<double>(value._count, pr_action))));
+
+            // r denotes the proportion of samples used for this given action
+            // out of all samples passing through the state
+            double r = 1.0;
+            if(value._count > 0)
+                r = std::sqrt(std::log(sum_count) / (double) value._count);
+
+            // exploration fraction
+            double C = 1.0 / nactions;
+
+            // combine expressions, the "goodness" and the exploration-term.
+            return lifted + (r * C) / (1.0 + C);
         }
     }
 }
