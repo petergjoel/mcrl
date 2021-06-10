@@ -462,7 +462,7 @@ movement4.location, taskExe4.location, iteration[4], tf[4][0], tf[4][1], tf[4][2
 movement5.location, taskExe5.location, iteration[5], tf[5][0], tf[5][1], tf[5][2], tf[5][3]}-&gt;{}:&lt;&gt; (((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) || globalTime &gt;= MAXTIME)</comment>
 		</query>
 		<query>
-			<formula>saveStrategy("/home/ron/uppaal/projects/q_learning/output/complete_path.out", opt)</formula>
+			<formula>saveStrategy("full_strategy.json", opt)</formula>
 			<comment>A[] ((taskExe0.T1 imply movement0.P1) and (taskExe1.T1 imply movement1.P1) and (taskExe2.T1 imply movement2.P1) and 
 (taskExe0.T2 imply movement0.P2) and (taskExe1.T2 imply movement1.P2) and (taskExe2.T2 imply movement2.P2) and 
 (taskExe0.T3 imply movement0.P3) and (taskExe1.T3 imply movement1.P3) and (taskExe2.T3 imply movement2.P3)) opt
@@ -479,7 +479,7 @@ E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under op
 			<comment>Task Coverage</comment>
 		</query>
 		<query>
-			<formula>saveStrategy("/home/ron/eclipse-workspace/OutParser/out/concise_path.out", opt)</formula>
+			<formula>saveStrategy("compact_strategy.json", opt)</formula>
 			<comment/>
 		</query>
 	</queries>
