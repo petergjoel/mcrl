@@ -139,7 +139,7 @@ ST_Q_Action next_action = {-1, -1, -1, -1};
 bool no_action = false;
 
 //the libs are in the same of folder of this model, please specify the directory below.
-import "/home/ron/uppaal/projects/conductor/lib/libconductor.so" {
+import "libconductor.so" {
     initialize = int uppaal_external_initialize();
     print = void uppaal_external_print_strategy();
     test = int uppaal_external_test();
